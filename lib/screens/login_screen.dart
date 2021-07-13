@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'package:provider/provider.dart';
+
+import '../helpers/show_alert.dart';
+import '../services/auth_service.dart';
 import '../widgets/custom_elevated_button.dart';
 import '../widgets/custom_textfield.dart';
 import '../widgets/labels.dart';
@@ -54,6 +58,9 @@ class __FormState extends State<_Form> {
 
   @override
   Widget build(BuildContext context) {
+
+    final authService = Provider.of<AuthService>(context);
+
     return Container(
       margin: EdgeInsets.only(top: 40),
       padding: EdgeInsets.symmetric(horizontal: 50),
@@ -73,9 +80,16 @@ class __FormState extends State<_Form> {
             textController: passwordCtrl,
           ),
           CustomElevatedButton(
-            text: "Login", 
-            onPressed: (){
-              print(emailCtrl.text);
+            text: "Login",
+            disabled: authService.authenticating,
+            onPressed:  () async {
+              FocusScope.of(context).unfocus();
+              final loginStatus = await authService.login(emailCtrl.text.trim(), passwordCtrl.text.trim());
+              if(loginStatus){
+                Navigator.of(context).pushReplacementNamed("users");
+              }else{
+                showAlert(context, "Login error", "Not valid credentials");
+              }
             }
           )
         ],
