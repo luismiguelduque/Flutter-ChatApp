@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_chat_app/services/auth_service.dart';
-import 'package:provider/provider.dart';
 
+import 'package:provider/provider.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 
-import 'package:flutter_chat_app/models/user.dart';
+import '../services/auth_service.dart';
+import '../services/socket_service.dart';
+import '../services/users_service.dart';
+import '../services/chat_service.dart';
+import '../models/user.dart';
 
 class UsersScreen extends StatefulWidget {
   @override
@@ -13,17 +16,21 @@ class UsersScreen extends StatefulWidget {
 
 class _UsersScreenState extends State<UsersScreen> {
 
+  final userService = UsersService();
   RefreshController _refreshController = RefreshController(initialRefresh: false);
 
-  final List<User> users = [
-    User(uid: "t1", name: "Luis Duque", email: "luis@email.com", online: false),
-    User(uid: "t2", name: "John Doe", email: "john@email.com", online: true),
-    User(uid: "t3", name: "Pedro Perez", email: "pedro@email.com", online: false),
-  ];
+  List<User> users = [];
+
+  @override
+  void initState() {
+    this._loadUsers();
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
+    final socketService = Provider.of<SocketService>(context);
     final User user = authService.user;
     return Scaffold(
       appBar: AppBar(
@@ -33,6 +40,7 @@ class _UsersScreenState extends State<UsersScreen> {
         backgroundColor: Colors.white,
         leading: IconButton(
           onPressed: (){
+            socketService.disconnect();
             Navigator.pushReplacementNamed(context, "login");
             AuthService.deleteToken();
           },
@@ -41,7 +49,7 @@ class _UsersScreenState extends State<UsersScreen> {
         actions: [
           Container(
             margin: EdgeInsets.only(right: 10),
-            child: 1 == 1 
+            child: socketService.serverStatus == ServerStatus.Online 
               ? Icon(Icons.check_circle, color: Colors.blue[400],)
               : Icon(Icons.offline_bolt, color: Colors.red,)
           )
@@ -61,7 +69,8 @@ class _UsersScreenState extends State<UsersScreen> {
   }
 
   void _loadUsers() async{
-    await Future.delayed(Duration(milliseconds: 1000));
+    this.users = (await this.userService.getUsers(0))!;
+    setState(() {});
     _refreshController.refreshCompleted();
   }
 }
@@ -110,6 +119,11 @@ class UserTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(100),
         ),
       ),
+      onTap: (){
+        final chatService = Provider.of<ChatService>(context, listen: false);
+        chatService.userTo = user;
+        Navigator.pushNamed(context, 'chat');
+      },
     );
   }
 }

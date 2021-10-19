@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_chat_app/services/socket_service.dart';
 
 import 'package:provider/provider.dart';
 
@@ -61,6 +62,7 @@ class __FormState extends State<_Form> {
   Widget build(BuildContext context) {
 
     final authService = Provider.of<AuthService>(context);
+    final socketService = Provider.of<SocketService>(context);
     
     return Container(
       margin: EdgeInsets.only(top: 40),
@@ -93,6 +95,7 @@ class __FormState extends State<_Form> {
               FocusScope.of(context).unfocus();
               final registerMessage = await authService.register(nameCtrl.text.trim(), emailCtrl.text.trim(), passwordCtrl.text.trim());
               if(registerMessage == true){
+                socketService.connect();
                 Navigator.of(context).pushReplacementNamed("users");
               }else{
                 showAlert(context, "Incorrect register", registerMessage);

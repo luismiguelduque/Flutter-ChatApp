@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_chat_app/services/socket_service.dart';
 
 import 'package:provider/provider.dart';
 
@@ -24,9 +25,11 @@ class LoadingScreen extends StatelessWidget {
 
   Future checkLoginState(BuildContext context) async {
     final authService = Provider.of<AuthService>(context, listen: false);
+    final socketService = Provider.of<SocketService>(context, listen: false);
     final authenticated = await authService.isLogedIn();
     SchedulerBinding.instance?.addPostFrameCallback((_) {
       if(authenticated){
+        socketService.connect();
         Navigator.pushReplacement(
           context, 
           PageRouteBuilder(
